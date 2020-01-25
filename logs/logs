@@ -1,0 +1,11 @@
+2020-01-25 22:52:42,684 root         WARNING  Log @warning torrents dir is empty!
+2020-01-25 22:53:02,385 root         INFO     Log @connected to 127.0.0.1:12345
+2020-01-25 22:53:02,387 root         INFO     Log @successfully sent: asd.owo
+2020-01-25 22:53:02,387 root         INFO     Log @closing 127.0.0.1:12345 connection
+2020-01-25 22:53:38,375 root         INFO     Log @connected to 127.0.0.1:12345
+2020-01-25 22:53:38,375 root         INFO     Log @successfully sent: asd.owo
+2020-01-25 22:53:38,375 root         INFO     Log @closing 127.0.0.1:12345 connection
+2020-01-25 22:53:38,375 root         INFO     Log @info removed file from torrentbox, have fun
+2020-01-25 22:54:22,527 root         INFO     Log @connected to 127.0.0.1:12345
+2020-01-25 22:59:19,091 root         INFO     Log @successfully sent: 4GB.bin
+2020-01-25 22:59:19,091 root         INFO     Log @closing 127.0.0.1:12345 connection

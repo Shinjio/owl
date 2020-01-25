@@ -1,1 +1,7 @@
 config.json
+config.json.bak
+servertests/
+tests/
+rawclient.py
+rawserver.py
+*.swp

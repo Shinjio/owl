@@ -8,6 +8,10 @@ import time
 import json
 import os
 
+from functools import partial
+
+transferredHash = None
+
 class Client:
     def __init__(self, ip, port, files, filenames, chunk, sock):
         self.ip = ip
@@ -17,7 +21,7 @@ class Client:
         self.chunk = chunk
         self.sock = sock
     
-    def connect(self):
+    def sockConnect(self):
         try:
             self.sock.connect((self.ip , self.port))
             logging.info('Log @connected to {}:{}'.format(self.ip, str(self.port)))
@@ -26,32 +30,44 @@ class Client:
 
     def sockSend(self):
         try:
+            global transferredHash
             #send filenames
-            data = pickle.dumps(self.filenames)
+            data = pickle.dumps(self.filenames[0])
             self.sock.send(data)
-
-            for i in self.files:
-                f = open(i, 'rb')
+            
+            f = open(self.files[0], 'rb')
+            buf = f.read(self.chunk)
+            while buf:
+                self.sock.send(buf)
                 buf = f.read(self.chunk)
-                while buf:
-                    self.sock.send(buf)
-                    buf = f.read(self.chunk)
-                logging.info('Log @successfully sent: {}'.format(i))
-                f.close()
+            f.close()
+            self.sock.shutdown(socket.SHUT_WR)
+            
+            #check integrity
+            transferredHash = self.sock.recv(1024).decode()
+            print(transferredHash)
 
+            logging.info('Log @successfully sent: {}'.format(self.filenames[0])) 
         except Exception as e:
             logging.error('Log @send exception {}'.format(str(e)))
 
-    def integrityCheck(self):
-        md5sum = {i:hashlib.md5(open(i, 'rb').read()).hexdigest() for i in self.files}
-
-    def close(self):
+    def sockClose(self):
         try:
-            #self.sock.shutdown(SHUT_RDWR)
+            self.sock.shutdown(socket.SHUT_RDWR)
             self.sock.close()
             logging.info('Log @closing {}:{} connection'.format(self.ip, str(self.port)))
         except Exception as e:
             logging.error('Log @closing exception {}'.format(str(e)))
+
+def deleteFile(files):
+        os.remove(files)
+
+def md5(fname):
+        with open(fname, 'rb') as f:
+            d = hashlib.md5()
+            for buf in iter(partial(f.read, 128), b''):
+                d.update(buf)
+        return d.hexdigest()
 
 def initialize():
     #list all files in complete dir and add them into a list
@@ -74,12 +90,24 @@ def initialize():
     sock = socket.socket() #socket
     logging.config.fileConfig("log_config.ini", disable_existing_loggers=False) #logiger
 
-    #send files
-    client = Client(ip, port, files, filenames, chunk, sock)
-    client.connect()
-    client.sockSend()
-    client.integrityCheck()
-    client.close()
+    try:
+        client = Client(ip, port, files, filenames, chunk, sock)
+        client.sockConnect()
+        client.sockSend()
+        client.sockClose()
+    except UnboundLocalError as unbound:
+        logging.warning('Log @warning torrents dir is empty!')
+        exit()
+    except Exception as e:
+        logging.error('Log @error {}'.format(str(e)))
+        exit()
+
+    if md5(files[0]) == transferredHash:
+        deleteFile(files[0])
+        logging.info('Log @info removed file from torrentbox, have fun')
+    else:
+        logging.warning('Log @warning md5 does not match, retrying...')
+        exit()
 
 if __name__ == "__main__":
     initialize()

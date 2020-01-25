@@ -1,4 +1,6 @@
 {
-	"complete":"/home/kurisu/torrents/complete",
-	"incomplete": "/home/kurisu/torrents/incomplete"
+    "ready": false,
+    "complete": "",
+    "ip": "",
+    "port": 0
 }

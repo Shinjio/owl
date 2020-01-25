@@ -2,15 +2,18 @@ import logging
 import logging.config
 
 import hashlib
+import pickle
 import socket
+import time
 import json
 import os
 
 class Client:
-    def __init__(self, ip, port, files, chunk, sock):
+    def __init__(self, ip, port, files, filenames, chunk, sock):
         self.ip = ip
         self.port = port
         self.files = files
+        self.filenames = filenames
         self.chunk = chunk
         self.sock = sock
     
@@ -21,8 +24,12 @@ class Client:
         except Exception as e:
             logging.error('Log @connect exception {}'.format(str(e)))
 
-    def send(self):
+    def sockSend(self):
         try:
+            #send filenames
+            data = pickle.dumps(self.filenames)
+            self.sock.send(data)
+
             for i in self.files:
                 f = open(i, 'rb')
                 buf = f.read(self.chunk)
@@ -37,7 +44,6 @@ class Client:
 
     def integrityCheck(self):
         md5sum = {i:hashlib.md5(open(i, 'rb').read()).hexdigest() for i in self.files}
-        print(md5sum)
 
     def close(self):
         try:
@@ -62,15 +68,16 @@ def initialize():
     if [f for f in os.listdir(complete) if not f.startswith('.')] == []:
         logging.info('Log @empty directory, exiting...')
     else:
-        files = [complete+str(f) for f in os.listdir(complete)]
+        filenames = [str(f) for f in sorted(os.listdir(complete))]
+        files = [complete+str(f) for f in sorted(os.listdir(complete))]
     chunk = 1024*8 #chunk of data
     sock = socket.socket() #socket
     logging.config.fileConfig("log_config.ini", disable_existing_loggers=False) #logiger
 
     #send files
-    client = Client(ip, port, files, chunk, sock)
+    client = Client(ip, port, files, filenames, chunk, sock)
     client.connect()
-    client.send()
+    client.sockSend()
     client.integrityCheck()
     client.close()
 

@@ -15,7 +15,7 @@ class Server:
         self.filenames = None
     
     def bindsock(self):
-        self.sock.bind(('127.0.0.1', self.port))
+        self.sock.bind(('0.0.0.0', self.port))
         self.sock.listen(5)
 
     def initfiles(self):
@@ -28,7 +28,8 @@ class Server:
                 self.receive(client, addr)
 
     def receive(self, client, addr):
-        f = open(self.filenames, 'wb')
+        global filedestination
+        f = open(filedestination + self.filenames, 'wb')
         buf = client.recv(self.chunk)
         while buf:
             f.write(buf)
@@ -41,8 +42,9 @@ class Server:
         self.initfiles()
 
     def md5(self, fname):
+        global filedestination
         hash_md5 = hashlib.md5()
-        with open(fname, "rb") as f:
+        with open(filedestination + fname, "rb") as f:
             for chunk in iter(lambda: f.read(1024), b""):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
@@ -72,4 +74,5 @@ if __name__ == "__main__":
         if data['ready'] is False:
             print("[!] You must run setup.py first!")
             exit()
+        filedestination = data['complete']
     initialize()
